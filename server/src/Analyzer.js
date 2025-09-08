@@ -8,7 +8,7 @@ export default class Analyzer {
   #markdownConfig = new MarkdownConfig();
 
   async initConfigs(uri) {
-    await this.#markdownConfig.initOptions(uri);
+    await this.#markdownConfig.initConfig(uri);
   }
 
   updateContent(uri, text) {
@@ -22,7 +22,7 @@ export default class Analyzer {
   #generateResults(uri) {
     const document = this.#document.get(uri);
     let results = [];
-    let options = this.#markdownConfig.getOptions(uri);
+    let options = this.#markdownConfig.getConfig();
     if (options && document) {
       options.strings = { content: document.text };
       results = markdownlint.sync(options).content;
