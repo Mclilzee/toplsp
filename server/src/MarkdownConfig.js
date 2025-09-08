@@ -24,15 +24,13 @@ export default class MarkdownConfig {
     }
 
     const baseConfig = fs.readFileSync(paths.config).toString();
-    const options = parse(baseConfig);
-    const rulePromises = options.customRules.map(
+    this.#config = parse(baseConfig);
+    const rulePromises = this.#config.customRules.map(
       (r) => import(path.join(paths.fileUrl, r)),
     );
 
     const customRules = await Promise.all(rulePromises);
-    options.customRules = customRules.map((rule) => rule.default);
-
-    console.error(this.#config)
+    this.#config.customRules = customRules.map((rule) => rule.default);
   }
 
   #getConfigFiles(uri) {
