@@ -1,5 +1,6 @@
 import Diagnostic from "./Diagnostic.js";
-import markdownlint from "markdownlint";
+import markdownIt from "markdown-it";
+import { lint } from "markdownlint/sync";
 import CodeAction from "./CodeAction.js";
 import MarkdownConfig from "./MarkdownConfig.js";
 
@@ -24,10 +25,12 @@ export default class Analyzer {
     let results = [];
     let options = this.#markdownConfig.getConfig();
     if (options && document) {
+      options.markdownItFactory = () => markdownIt({ html: true });
       options.strings = { content: document.text };
-      results = markdownlint.sync(options).content;
+      results = lint(options).content;
       document.results = results;
     }
+
     return results;
   }
 
@@ -41,8 +44,8 @@ export default class Analyzer {
       return [];
     }
 
-    return document
-      .results.filter((r) => this.#validActionResult(r, range))
+    return document.results
+      .filter((r) => this.#validActionResult(r, range))
       .map((r) => new CodeAction(r, uri, diagnostics));
   }
 

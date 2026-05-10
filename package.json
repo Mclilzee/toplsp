@@ -19,13 +19,12 @@
     "install-dependencies": "npm install && cd client && npm install && cd ../server && npm install && cd .."
   },
   "devDependencies": {
-    "esbuild": "^0.27.4"
+    "esbuild": "^0.28.0"
   },
   "main": "./client/out/extension.js",
   "activationEvents": [
     "onLanguage:markdown",
-    "workspaceContains:**/curriculum/project.markdownlint-cli2.jsonc",
-    "workspaceContains:**/curriculum/lesson.markdownlint-cli2.jsonc"
+    "workspaceContains:**/curriculum/.markdownlint-cli2.jsonc"
   ],
   "engines": {
     "vscode": "^1.8.0"
