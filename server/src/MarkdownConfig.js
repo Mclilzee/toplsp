@@ -4,24 +4,17 @@ import path from "path";
 import fs from "fs";
 
 const BASE_CONFIG_FILE = ".markdownlint-cli2.jsonc";
-const LESSON_CONFIG_FILE = "lesson.markdownlint-cli2.jsonc";
-const PROJECT_CONFIG_FILE = "project.markdownlint-cli2.jsonc";
+const JSON_PACKAGE = "package.json";
 
 export default class MarkdownConfig {
-  #projectConfig;
-  #lessonConfig;
+  #config;
 
-  getOptions(uri) {
-    const fileName = path.basename(uri);
-    if (fileName.startsWith("project_") || fileName.startsWith("project-")) {
-      return this.#projectConfig;
-    } else {
-      return this.#lessonConfig;
-    }
+  getConfig() {
+    return this.#config;
   }
 
-  async initOptions(uri) {
-    if (this.#projectConfig && this.#lessonConfig) {
+  async initConfig(uri) {
+    if (this.#config) {
       return;
     }
 
@@ -30,31 +23,14 @@ export default class MarkdownConfig {
       return;
     }
 
-    const baseConfig = fs.readFileSync(paths.base).toString();
-    const options = parse(baseConfig);
-    const rulePromises = options.customRules.map(
+    const baseConfig = fs.readFileSync(paths.config).toString();
+    this.#config = parse(baseConfig);
+    const rulePromises = this.#config.customRules.map(
       (r) => import(path.join(paths.fileUrl, r)),
     );
 
     const customRules = await Promise.all(rulePromises);
-    options.customRules = customRules.map((rule) => rule.default);
-
-    this.#lessonConfig = this.#mergeConfig(options, paths.lesson);
-    this.#projectConfig = this.#mergeConfig(options, paths.project);
-  }
-
-  #mergeConfig(options, path) {
-    const configContent = fs.readFileSync(path).toString();
-    const config = parse(configContent).config;
-    const mergedConfig = {
-      config: { ...options.config },
-      customRules: [...options.customRules],
-    };
-    Object.entries(config)
-      .filter(([key, _]) => key !== "extends")
-      .forEach(([key, value]) => (mergedConfig.config[key] = value));
-
-    return mergedConfig;
+    this.#config.customRules = customRules.map((rule) => rule.default);
   }
 
   #getConfigFiles(uri) {
@@ -63,18 +39,26 @@ export default class MarkdownConfig {
       const baseConfig = path.join(dir, BASE_CONFIG_FILE);
 
       if (fs.existsSync(baseConfig)) {
-        const lessonConfig = path.join(dir, LESSON_CONFIG_FILE);
-        const projectConfig = path.join(dir, PROJECT_CONFIG_FILE);
+        try {
+          const jsonPackagePath = path.join(dir, JSON_PACKAGE);
+          if (!fs.existsSync(jsonPackagePath)) {
+            return null;
+          }
 
-        if (fs.existsSync(lessonConfig) && fs.existsSync(projectConfig)) {
-          const paths = {
-            fileUrl: pathToFileURL(dir).href,
-            base: baseConfig,
-            lesson: lessonConfig,
-            project: projectConfig,
-          };
-
-          return paths;
+          const jsonPackage = JSON.parse(fs.readFileSync(jsonPackagePath));
+          if (
+            jsonPackage.name === "curriculum" &&
+            jsonPackage.description.startsWith("[The Odin Project]")
+          ) {
+            return {
+              fileUrl: pathToFileURL(dir).href,
+              config: baseConfig,
+            };
+          } else {
+            return null;
+          }
+        } catch (e) {
+          return null;
         }
       }
 
