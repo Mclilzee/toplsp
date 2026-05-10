@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "jsonc-parser": "^3.2.1",
+    "markdown-it": "^14.1.1",
     "markdownlint": "^0.40.0"
   },
   "devDependencies": {
